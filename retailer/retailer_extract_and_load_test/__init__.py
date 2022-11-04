@@ -183,14 +183,9 @@ def transform(root_dir, client_pl, client, df, path):
     # 
     # ### capitalize data
     # 
-
-
-
     for i in upper_str:
-        df[i] = df[i].fillna("").str.title()
-        
-
-
+        df[i] = df[i].fillna("")
+        df[i] = df[i].apply(lambda x: " ".join(x.title().split()))
 
     # ## Identify and drop
     # 
@@ -656,14 +651,18 @@ def transform(root_dir, client_pl, client, df, path):
     cols = ['ofp_valuenearestyear',
             'ofp_valuemiddleyear', 'ofp_valuefurthestyear']
     df[cols] = df[cols].replace({0: np.nan})
+    
     #### Sales per network farmer (most recent year only)
     df['sale_per_customer'] = (df['ofp_valuenearestyear']/df['cs_customer']).round(1)
-    df['sale_per_customer_avg'] = round(df['sale_per_customer'].mean(), 1)
-    df['sale_per_customer_topq'] = round(df['sale_per_customer'].quantile(0.75), 0)
+    if(df['sale_per_customer'].isnull().values.all()):
+        df[['sale_per_customer_avg', 'sale_per_customer_topq']] = 0
+    else:
+        df['sale_per_customer_avg'] = round(df['sale_per_customer'].mean(), 1)
+        df['sale_per_customer_topq'] = round(df['sale_per_customer'].quantile(0.75), 0)
+
     #### Calculate average sales values
     df['sales_avg'] = round(
         (df['ofp_valuenearestyear']/df['cs_customer'].sum()), 1)
-        
 
 
 
@@ -1143,7 +1142,6 @@ def transform(root_dir, client_pl, client, df, path):
     full_process_filename = "ALP_Retail_FullProcessedDataWithLabels.csv"
     load_csv(client, realtime_path, full_process_filename, df)
     load_csv(client, path, full_process_filename, df)
-
 
 def load_csv(datalake_service_client, pre_path, suf_path, df):
  

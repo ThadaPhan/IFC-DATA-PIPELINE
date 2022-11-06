@@ -443,6 +443,11 @@ def transform(root_dir, client_pl, client, df, path):
 
     ### Does the LF have goals for the business?
     df['pp_goals_sc'] = np.where(df['pp_goals'] == 1, 100, 0)
+    df['pp_ap'] = np.where(df['pp_goals'] == 0, 0, df['pp_ap'])
+
+
+    df['pp_written'] = np.where(df['pp_goals'] == 0, 0, df['pp_written'])
+    df['pp_ap_budget'] = np.where(df['pp_ap_budget'] == 0, 0, df['pp_ap_budget'])
     ### Does the LF have a plan for achieving those goals?
     df['pp_ap_sc'] = np.where(df['pp_ap'] == 1, 100, 0)
     ### Is the plan a written plan?
@@ -684,8 +689,16 @@ def transform(root_dir, client_pl, client, df, path):
     df['sales_trend_far_near'] = df['sales_trend_far_near'].replace(
         [np.inf, -np.inf], np.nan)
     #### Calculate the average percentage change trend
-    df['sales_trend_avg'] = df[['sales_trend_far_near', 'sales_trend_far_mid',
-                                'sales_trend_mid_near']].mean(axis=1).round(3)
+    df['profit_trend_avg'] = df[['profit_trend_far_near', 'profit_trend_far_mid',
+                                 'profit_trend_mid_near']].mean(axis=1).round(3)
+
+
+    df['total_profit_trend_avg'] = ((df['profit_trend_far_near'].sum() + df['profit_trend_far_mid'].sum() +
+                                    df['profit_trend_mid_near'])/3).round(3)
+    df['total_profit_trend_desc'] = np.where(df['total_profit_trend_avg'] > 0.0, 'Increase',
+                                            np.where(df['total_profit_trend_avg'] == 0.0, 'No Change',
+                                                    np.where(df['total_profit_trend_avg'] < 0.0, 'Decrease', 'Insufficient sales financial data'
+                                                            )))
     #### Add description for available trend
     df['sales_trend_desc'] = np.where(df['ofp_valuenearestyear_refused'] == 99, 'Refused to answer', 
                             np.where(df['sales_trend_avg'] > 0.0, 'Increase', 
@@ -1062,7 +1075,12 @@ def transform(root_dir, client_pl, client, df, path):
 
 
 
-    df.loc[:, non_object_col_not_change_list] = df.loc[:,].fillna(10000)
+    # df.loc[:, non_object_col_not_change_list] = df.loc[:,].fillna(10000)
+    list_numeric = ['ofp_borrowed_issues',
+                    'pts_fs_audit', 'rm_locked', 'rm_security', 'rm_safe', 'rm_reserves', 'rm_succession',
+                    'rm_cash', 'rm_inventory', 'rm_budget', 'rm_writtencash', 'rm_writteninvent', 'rm_v_insurance',
+                    'rm_h_insurance', 'rm_p_insurance', 'rm_l_insurance', 'rm_storage', 'rm_97_insurance']
+    df.loc[:, list_numeric] = df.loc[:, list_numeric].fillna(10000)
     df['sale_per_customer'] = df['sale_per_customer'].fillna('N/A')
     df['businessname_final'] = df['businessname_final'].fillna('Not available')
 

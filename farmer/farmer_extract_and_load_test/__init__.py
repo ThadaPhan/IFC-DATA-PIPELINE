@@ -146,7 +146,8 @@ def transform(root_dir, client_pl, client, df, path):
     upper_str = col_capitalize.split(",")
     ### capitalize data
     for i in upper_str:
-        df[i] = df[i].fillna("").str.title()
+        df[i] = df[i].fillna("")
+        df[i] = df[i].apply(lambda x: " ".join(x.title().split()))
     ## Identify and drop
     ### Non-consent data (consent = 0)
     df = df[df['consent'] != 0]

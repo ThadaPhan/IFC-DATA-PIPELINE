@@ -983,9 +983,10 @@ def main(mytimer: func.TimerRequest) -> None:
     account_key = 'znNZ4yENp02QQST7JMU8uFwCFoPE2D3W5OQXKBw7oXQy+v1GrBwVtxVeJ6PGZwiqNC7Sxw7QzIHG+ASto8vdAQ=='
 
     form_id = "alp_lead_farmer_survey_for_testing"
+    survey_name = "ALP Lead Farmer Survey - FOR TESTING"
     client_pl = 'Asili Farms'
     phase = 'Baseline'
-    root_dir = "/{} Test/{}".format(client_pl, phase)
+    root_dir = "{}/{}/{}".format(survey_name, client_pl, phase)
 
     df = extract(server_name, username, password, form_id, client_pl, phase)
 

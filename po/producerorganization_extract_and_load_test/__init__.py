@@ -1385,15 +1385,15 @@ def transform(root_dir, project, client, df, path):
     else:
         df['total_trucksize_label'] = 'No'
     df['trucksize_97_label'] = np.where(
-        df['trucksize_97'].isna(), "N/A", df['trucksize_97'])
+        df['trucksize_97'].isna(), "N/A", df['trucksize_97'].round(0).astype('Int64'))
     df['trucksize_s_label'] = np.where(
-        df['trucksize_s'].isna(), "N/A", df['trucksize_s'])
+        df['trucksize_s'].isna(), "N/A", df['trucksize_s'].round(0).astype('Int64'))
     df['trucksize_m_label'] = np.where(
-        df['trucksize_m'].isna(), "N/A", df['trucksize_m'])
+        df['trucksize_m'].isna(), "N/A", df['trucksize_m'].round(0).astype('Int64'))
     df['trucksize_l_label'] = np.where(
-        df['trucksize_l'].isna(), "N/A", df['trucksize_l'])
+        df['trucksize_l'].isna(), "N/A", df['trucksize_l'].round(0).astype('Int64'))
     df['trucksize_vl_label'] = np.where(
-        df['trucksize_vl'].isna(), "N/A", df['trucksize_vl'])
+        df['trucksize_vl'].isna(), "N/A", df['trucksize_vl'].round(0).astype('Int64'))
 
     df['shed_size_total'] = df.apply(lambda x: count_size(x), axis=1)
     df['ofp_asset_shed_size_converted'] = np.where(df['ofp_asset_shed_um'] == 2, df['shed_size_total'],
@@ -1457,35 +1457,35 @@ def load_csv(datalake_service_client, pre_path, suf_path, df):
     logging.info("Updated data")
 
 
-# def main(mytimer: func.TimerRequest) -> None:
-#     if mytimer.past_due:
-#         logging.info('The timer is past due!')
+def main(mytimer: func.TimerRequest) -> None:
+    if mytimer.past_due:
+        logging.info('The timer is past due!')
 
-server_name = "ifcafrica"
-username = "squiroga@ifc.org"
-password = "IFCMAS2021!"
-account_name = 'sproducerorganization'
-account_key = 'kx3ymtKbVE8wTD8GjeymqOUCcSTA9wJQ3YdBdSEFHnbjyb+T5nYhwSfMqJwYPhv/R+zasPiyZk0A+AStpQM7Tw=='
+    server_name = "ifcafrica"
+    username = "squiroga@ifc.org"
+    password = "IFCMAS2021!"
+    account_name = 'sproducerorganization'
+    account_key = 'kx3ymtKbVE8wTD8GjeymqOUCcSTA9wJQ3YdBdSEFHnbjyb+T5nYhwSfMqJwYPhv/R+zasPiyZk0A+AStpQM7Tw=='
 
-form_id = "alp_producer_organization_survey_for_testing"
-survey_name = "ALP Producer Organization Survey - FOR TESTING"
-project = 'Project 1 (Test) (2022)'
-phase = 'Baseline' 
-root_dir = "{}/{}/{}".format(survey_name, project, phase)
+    form_id = "alp_producer_organization_survey_for_testing"
+    survey_name = "ALP Producer Organization Survey - FOR TESTING"
+    project = 'Project 1 (Test) (2022)'
+    phase = 'Baseline' 
+    root_dir = "{}/{}/{}".format(survey_name, project, phase)
 
-df = extract(server_name, username, password, form_id, project, phase)
+    df = extract(server_name, username, password, form_id, project, phase)
 
-client = init_datalake_service_client(account_name, account_key)
+    client = init_datalake_service_client(account_name, account_key)
 
-current_date_str = datetime.now(pytz.timezone(
-    "Asia/Ho_Chi_Minh")).strftime("%Y/%m/%d/")
+    current_date_str = datetime.now(pytz.timezone(
+        "Asia/Ho_Chi_Minh")).strftime("%Y/%m/%d/")
 
-raw_pre_path = f"{root_dir}/raw/{current_date_str}"
+    raw_pre_path = f"{root_dir}/raw/{current_date_str}"
 
-processed_pre_path = f"{root_dir}/processed/{current_date_str}"
+    processed_pre_path = f"{root_dir}/processed/{current_date_str}"
 
-load_csv(client, raw_pre_path, "surveycto_data.csv", df)
+    load_csv(client, raw_pre_path, "surveycto_data.csv", df)
 
-transform(root_dir, project, client, df, processed_pre_path)
+    transform(root_dir, project, client, df, processed_pre_path)
 
 

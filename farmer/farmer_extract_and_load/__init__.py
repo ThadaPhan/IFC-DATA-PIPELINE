@@ -520,8 +520,8 @@ def transform(root_dir, project, client, df, path):
     if(df['sales_per_nfarmer'].isnull().values.all()):
         df[['sales_per_nfarmer_avg', 'sales_per_nfarmer_topq']] = 0
     else:
-        df['sales_per_nfarmer_avg'] = df['sales_per_nfarmer'].mean()
-        df['sales_per_nfarmer_topq'] = df['sales_per_nfarmer'].quantile(
+        df['sales_avg'] = df['sales_per_nfarmer'].mean()
+        df['sales_topq'] = df['sales_per_nfarmer'].quantile(
             0.75).round(1)
     #### Calculate average sales values
     

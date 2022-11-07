@@ -956,17 +956,14 @@ def transform(root_dir, client_pl, client, df, path):
 
 
 def load_csv(datalake_service_client, pre_path, suf_path, df):
-
+ 
     filesystem_name = "data"
 
-    file_client = datalake_service_client.get_file_client(
-        filesystem_name, pre_path + suf_path)
+    file_client = datalake_service_client.get_file_client(filesystem_name, pre_path + suf_path)
 
     raw_df = df.to_csv(index=False)
 
-    file_client.upload_data(data=raw_df, overwrite=True, length=len(raw_df))
-
-    file_client.flush_data(len(raw_df))
+    file_client.upload_data(data=raw_df, overwrite=True)
 
     logging.info("Updated data")
 

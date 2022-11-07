@@ -106,7 +106,6 @@ def transform(root_dir, client_pl, client, df, path):
     # ### Tab 1: Open notes
     # 
 
-    # %%
 
     open_notes_qc = df.loc[:, ["enumerator", "rtid_key", "consent", "primary_resp_name_final", "businessname_final", "open_notes"]]
 
@@ -114,7 +113,6 @@ def transform(root_dir, client_pl, client, df, path):
     # ### Tab 2: Duration
     # 
 
-    # %%
 
     duration_qc = df.loc[:, ["enumerator", "rtid_key", "consent",
                             "primary_resp_name_final", "businessname_final", "duration"]]
@@ -1170,7 +1168,6 @@ def transform(root_dir, client_pl, client, df, path):
         df['land_ag_know'] == 1, df['land_ag_size_converted'], "")
     df.index = np.arange(1, len(df) + 1)
     df.index = df.index.set_names(['ID'])
-
     full_process_filename = "ALP_Retail_FullProcessedDataWithLabels.csv"
     load_csv(client, realtime_path, full_process_filename, df)
     load_csv(client, path, full_process_filename, df)
@@ -1183,9 +1180,7 @@ def load_csv(datalake_service_client, pre_path, suf_path, df):
 
     raw_df = df.to_csv(index=False)
 
-    file_client.upload_data(data=raw_df,overwrite=True, length=len(raw_df))
-
-    file_client.flush_data(len(raw_df))
+    file_client.upload_data(data=raw_df, overwrite=True)
 
     logging.info("Updated data")
 
@@ -1203,7 +1198,7 @@ def main(mytimer: func.TimerRequest) -> None:
     survey_name = "ALP Retailer Survey - FOR TESTING"
     project = 'Project 1 (Test) (2022)'
     phase = 'Midline' 
-    root_dir = "{}/{}/{}".format(survey_name, project, phase)
+    root_dir = "/{}/{}/{}".format(survey_name, project, phase)
 
     df = extract(server_name, username, password, form_id, project, phase)
 

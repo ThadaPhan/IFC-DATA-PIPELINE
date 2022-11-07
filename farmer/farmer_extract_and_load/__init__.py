@@ -524,8 +524,7 @@ def transform(root_dir, project, client, df, path):
         df['sales_per_nfarmer_topq'] = df['sales_per_nfarmer'].quantile(
             0.75).round(1)
     #### Calculate average sales values
-    df['sales_avg'] = round(
-        (df['ofp_valuenearestyear']/df['cms_network'].sum()), 1)
+    
     #### Count number of years of available sales data
     df['sales_data_years'] = df[cols].count(axis=1)
     #### Calculate percentage change trends across all possible combinations of available data

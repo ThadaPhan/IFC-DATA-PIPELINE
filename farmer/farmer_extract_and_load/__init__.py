@@ -944,13 +944,16 @@ def transform(root_dir, project, client, df, path):
         df['land_comm_know'] == 1, df['land_comm_size_converted'], "")
     df['total_land_ag'] = np.where(
         df['land_ag_know'] == 1, df['land_ag_size_converted'], "")
+    if(1 in df['ofp_asset_truck']):
+        df['total_truck_label'] = "Yes"
+    else:
+        df['total_truck_label'] = "No"
     df.index = np.arange(1, len(df) + 1)
     df.index = df.index.set_names(['ID'])
     full_process_filename = "ALP_Farmer_FullProcessedDataWithLabels.csv"
 
     load_csv(client, realtime_path, full_process_filename, df)
     load_csv(client, path, full_process_filename, df)
-
 
 def load_csv(datalake_service_client, pre_path, suf_path, df):
 

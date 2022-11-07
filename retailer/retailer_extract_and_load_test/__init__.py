@@ -292,8 +292,23 @@ def transform(root_dir, client_pl, client, df, path):
 
     # 
     # # Prep step
-    # 
+    # # Fill null values with 0 so that score calculations produce final number
+    pts_cols_fillna = ['pts_records', 'pts_records1', 'pts_records2', 'pts_records3',
+                       'pts_records4', 'pts_records5', 'pts_ledger',
+                       'pts_ledger_cash', 'pts_ledger_sales', 'pts_ledger_expense', 'pts_ledger_asset',
+                       'pts_ledger_inv', 'pts_ledger_credit', 'pts_ledger_payable', 'app_acct', 'app_tracing',
+                       'app_inv', 'app_cpayment', 'app_fpayment', 'app_gps', 'app_onlineaccess', 'app_ict_s', 'app_ict_c',
+                       'app97']
 
+    for i in df.columns:
+        if i in pts_cols_fillna:
+            df[i].fillna(0, inplace=True)
+
+    rmee_cols_fillna = ['rm_insurance', 'rm_question', 'rm_p_insurance', 'rm_v_insurance',
+                        'rm_l_insurance', 'rm_h_insurance', 'rm_storage', 'rm_97_insurance',
+                        'rm_writtencash', 'rm_writteninvent', 'rm_locked', 'rm_security',
+                        'rm_safe', 'rm_budget', 'rm_inventory', 'rm_cash', 'rm_reserves',
+                        'rm_succession', 'rm_insurance97']
 
 
     ## Convert starttime to format dd/mm/yyyy, new column “startdate”

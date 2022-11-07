@@ -920,15 +920,15 @@ def transform(root_dir, project, client, df, path):
         0.75).round(1)
 
     df['trucksize_97_label'] = np.where(
-        df['trucksize_97'].isna(), "N/A", df['trucksize_97'])
+        df['trucksize_97'].isna(), "N/A", df['trucksize_97'].round(0).astype('Int64'))
     df['trucksize_s_label'] = np.where(
-        df['trucksize_s'].isna(), "N/A", df['trucksize_s'])
+        df['trucksize_s'].isna(), "N/A", df['trucksize_s'].round(0).astype('Int64'))
     df['trucksize_m_label'] = np.where(
-        df['trucksize_m'].isna(), "N/A", df['trucksize_m'])
+        df['trucksize_m'].isna(), "N/A", df['trucksize_m'].round(0).astype('Int64'))
     df['trucksize_l_label'] = np.where(
-        df['trucksize_l'].isna(), "N/A", df['trucksize_l'])
+        df['trucksize_l'].isna(), "N/A", df['trucksize_l'].round(0).astype('Int64'))
     df['trucksize_vl_label'] = np.where(
-        df['trucksize_vl'].isna(), "N/A", df['trucksize_vl'])
+        df['trucksize_vl'].isna(), "N/A", df['trucksize_vl'].round(0).astype('Int64'))
     df['pp_goal_label'] = np.where(df['pp_goals'] == 1, 'Yes',
                                    np.where(df['pp_goals'] == 0, 'No',
                                    "N/A"))

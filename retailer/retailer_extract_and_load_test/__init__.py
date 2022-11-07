@@ -707,6 +707,12 @@ def transform(root_dir, client_pl, client, df, path):
     #### Calculate the average percentage change trend
     df['sales_trend_avg'] = df[['sales_trend_far_near', 'sales_trend_far_mid',
                                 'sales_trend_mid_near']].mean(axis=1).round(3)
+    df['total_sales_trend_avg'] = ((df['sales_trend_far_near'].sum() + df['sales_trend_far_mid'].sum() +
+                                    df['sales_trend_mid_near'])/3).round(3)
+    df['total_sales_trend_desc'] = np.where(df['total_sales_trend_avg'] > 0.0, 'Increase',
+                                            np.where(df['total_sales_trend_avg'] == 0.0, 'No Change',
+                                                     np.where(df['total_sales_trend_avg'] < 0.0, 'Decrease', 'Insufficient sales financial data'
+                                                              )))
     #### Add description for available trend
     df['sales_trend_desc'] = np.where(df['ofp_valuenearestyear_refused'] == 99, 'Refused to answer', 
                             np.where(df['sales_trend_avg'] > 0.0, 'Increase', 

@@ -259,7 +259,9 @@ def transform(root_dir, project, client, df, path):
                         'rm_writtencash', 'rm_writteninvent', 'rm_locked', 'rm_security',
                         'rm_safe', 'rm_budget', 'rm_inventory', 'rm_cash', 'rm_reserves',
                         'rm_succession', 'rm_insurance97']
-
+    for i in df.columns:
+        if i in rmee_cols_fillna:
+            df[i].fillna(0, inplace=True)
     ## Convert starttime to format dd/mm/yyyy, new column “startdate”
     df['startdate'] = df["starttime"].apply(lambda x: datetime.strptime(
         x, "%b %d, %Y %I:%M:%S %p").strftime('%d/%m/%Y'))

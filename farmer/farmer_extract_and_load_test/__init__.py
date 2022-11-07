@@ -911,12 +911,9 @@ def load_csv(datalake_service_client, pre_path, suf_path, df):
 
     raw_df = df.to_csv(index=False)
 
-    file_client.upload_data(data=raw_df,overwrite=True, length=len(raw_df))
-
-    file_client.flush_data(len(raw_df))
+    file_client.upload_data(data=raw_df, overwrite=True)
 
     logging.info("Updated data")
-
 
 def main(mytimer: func.TimerRequest) -> None:
     if mytimer.past_due:

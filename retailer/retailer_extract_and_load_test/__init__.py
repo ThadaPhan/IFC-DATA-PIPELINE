@@ -54,7 +54,6 @@ def count_size(x):
 
     
 def extract(server_name, username, password, form_id, project_pl, phase):
-
     scto = pysurveycto.SurveyCTOObject(server_name, username, password)
     data = scto.get_form_data(form_id, format = 'csv')
     df = pd.read_csv(StringIO(data))
@@ -706,16 +705,8 @@ def transform(root_dir, client_pl, client, df, path):
     df['sales_trend_far_near'] = df['sales_trend_far_near'].replace(
         [np.inf, -np.inf], np.nan)
     #### Calculate the average percentage change trend
-    df['profit_trend_avg'] = df[['profit_trend_far_near', 'profit_trend_far_mid',
-                                 'profit_trend_mid_near']].mean(axis=1).round(3)
-
-
-    df['total_profit_trend_avg'] = ((df['profit_trend_far_near'].sum() + df['profit_trend_far_mid'].sum() +
-                                    df['profit_trend_mid_near'])/3).round(3)
-    df['total_profit_trend_desc'] = np.where(df['total_profit_trend_avg'] > 0.0, 'Increase',
-                                            np.where(df['total_profit_trend_avg'] == 0.0, 'No Change',
-                                                    np.where(df['total_profit_trend_avg'] < 0.0, 'Decrease', 'Insufficient sales financial data'
-                                                            )))
+    df['sales_trend_avg'] = df[['sales_trend_far_near', 'sales_trend_far_mid',
+                                'sales_trend_mid_near']].mean(axis=1).round(3)
     #### Add description for available trend
     df['sales_trend_desc'] = np.where(df['ofp_valuenearestyear_refused'] == 99, 'Refused to answer', 
                             np.where(df['sales_trend_avg'] > 0.0, 'Increase', 
@@ -1203,9 +1194,10 @@ def main(mytimer: func.TimerRequest) -> None:
     account_key='S35o6XpraTjY8oilLI1m1rORVv3C8YmIO92JfD0dau0OcJveIVVCRSSho+T1l5TmX4rAgGAebCO4+AStd8wZzw=='
 
     form_id = "alp_retailer_survey_for_testing"
+    survey_name = "ALP Retailer Survey - FOR TESTING"
     project = 'Project 1 (Test) (2022)'
     phase = 'Midline' 
-    root_dir = "/{}/{}".format(project, phase)
+    root_dir = "{}/{}/{}".format(survey_name, project, phase)
 
     df = extract(server_name, username, password, form_id, project, phase)
 

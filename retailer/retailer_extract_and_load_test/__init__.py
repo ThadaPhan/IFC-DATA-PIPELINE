@@ -183,14 +183,9 @@ def transform(root_dir, client_pl, client, df, path):
     # 
     # ### capitalize data
     # 
-
-
-
     for i in upper_str:
-        df[i] = df[i].fillna("").str.title()
-        
-
-
+        df[i] = df[i].fillna("")
+        df[i] = df[i].apply(lambda x: " ".join(x.title().split()))
 
     # ## Identify and drop
     # 
@@ -297,9 +292,26 @@ def transform(root_dir, client_pl, client, df, path):
 
     # 
     # # Prep step
-    # 
+    # # Fill null values with 0 so that score calculations produce final number
+    pts_cols_fillna = ['pts_records', 'pts_records1', 'pts_records2', 'pts_records3',
+                       'pts_records4', 'pts_records5', 'pts_ledger',
+                       'pts_ledger_cash', 'pts_ledger_sales', 'pts_ledger_expense', 'pts_ledger_asset',
+                       'pts_ledger_inv', 'pts_ledger_credit', 'pts_ledger_payable', 'app_acct', 'app_tracing',
+                       'app_inv', 'app_cpayment', 'app_fpayment', 'app_gps', 'app_onlineaccess', 'app_ict_s', 'app_ict_c',
+                       'app97']
 
+    for i in df.columns:
+        if i in pts_cols_fillna:
+            df[i].fillna(0, inplace=True)
 
+    rmee_cols_fillna = ['rm_insurance', 'rm_question', 'rm_p_insurance', 'rm_v_insurance',
+                        'rm_l_insurance', 'rm_h_insurance', 'rm_storage', 'rm_97_insurance',
+                        'rm_writtencash', 'rm_writteninvent', 'rm_locked', 'rm_security',
+                        'rm_safe', 'rm_budget', 'rm_inventory', 'rm_cash', 'rm_reserves',
+                        'rm_succession', 'rm_insurance97']
+    for i in df.columns:
+        if i in rmee_cols_fillna:
+            df[i].fillna(0, inplace=True)
 
     ## Convert starttime to format dd/mm/yyyy, new column “startdate”
     df['startdate'] = df["starttime"].apply(lambda x: datetime.strptime(x, "%b %d, %Y %I:%M:%S %p").strftime('%d/%m/%Y'))
@@ -448,6 +460,11 @@ def transform(root_dir, client_pl, client, df, path):
 
     ### Does the LF have goals for the business?
     df['pp_goals_sc'] = np.where(df['pp_goals'] == 1, 100, 0)
+    df['pp_ap'] = np.where(df['pp_goals'] == 0, 0, df['pp_ap'])
+
+
+    df['pp_written'] = np.where(df['pp_goals'] == 0, 0, df['pp_written'])
+    df['pp_ap_budget'] = np.where(df['pp_ap_budget'] == 0, 0, df['pp_ap_budget'])
     ### Does the LF have a plan for achieving those goals?
     df['pp_ap_sc'] = np.where(df['pp_ap'] == 1, 100, 0)
     ### Is the plan a written plan?
@@ -656,14 +673,18 @@ def transform(root_dir, client_pl, client, df, path):
     cols = ['ofp_valuenearestyear',
             'ofp_valuemiddleyear', 'ofp_valuefurthestyear']
     df[cols] = df[cols].replace({0: np.nan})
+    
     #### Sales per network farmer (most recent year only)
     df['sale_per_customer'] = (df['ofp_valuenearestyear']/df['cs_customer']).round(1)
-    df['sale_per_customer_avg'] = round(df['sale_per_customer'].mean(), 1)
-    df['sale_per_customer_topq'] = round(df['sale_per_customer'].quantile(0.75), 0)
+    if(df['sale_per_customer'].isnull().values.all()):
+        df[['sale_per_customer_avg', 'sale_per_customer_topq']] = 0
+    else:
+        df['sale_per_customer_avg'] = round(df['sale_per_customer'].mean(), 1)
+        df['sale_per_customer_topq'] = round(df['sale_per_customer'].quantile(0.75), 0)
+
     #### Calculate average sales values
     df['sales_avg'] = round(
         (df['ofp_valuenearestyear']/df['cs_customer'].sum()), 1)
-        
 
 
 
@@ -685,8 +706,16 @@ def transform(root_dir, client_pl, client, df, path):
     df['sales_trend_far_near'] = df['sales_trend_far_near'].replace(
         [np.inf, -np.inf], np.nan)
     #### Calculate the average percentage change trend
-    df['sales_trend_avg'] = df[['sales_trend_far_near', 'sales_trend_far_mid',
-                                'sales_trend_mid_near']].mean(axis=1).round(3)
+    df['profit_trend_avg'] = df[['profit_trend_far_near', 'profit_trend_far_mid',
+                                 'profit_trend_mid_near']].mean(axis=1).round(3)
+
+
+    df['total_profit_trend_avg'] = ((df['profit_trend_far_near'].sum() + df['profit_trend_far_mid'].sum() +
+                                    df['profit_trend_mid_near'])/3).round(3)
+    df['total_profit_trend_desc'] = np.where(df['total_profit_trend_avg'] > 0.0, 'Increase',
+                                            np.where(df['total_profit_trend_avg'] == 0.0, 'No Change',
+                                                    np.where(df['total_profit_trend_avg'] < 0.0, 'Decrease', 'Insufficient sales financial data'
+                                                            )))
     #### Add description for available trend
     df['sales_trend_desc'] = np.where(df['ofp_valuenearestyear_refused'] == 99, 'Refused to answer', 
                             np.where(df['sales_trend_avg'] > 0.0, 'Increase', 
@@ -1063,7 +1092,12 @@ def transform(root_dir, client_pl, client, df, path):
 
 
 
-    df.loc[:, non_object_col_not_change_list] = df.loc[:,].fillna(10000)
+    # df.loc[:, non_object_col_not_change_list] = df.loc[:,].fillna(10000)
+    list_numeric = ['ofp_borrowed_issues',
+                    'pts_fs_audit', 'rm_locked', 'rm_security', 'rm_safe', 'rm_reserves', 'rm_succession',
+                    'rm_cash', 'rm_inventory', 'rm_budget', 'rm_writtencash', 'rm_writteninvent', 'rm_v_insurance',
+                    'rm_h_insurance', 'rm_p_insurance', 'rm_l_insurance', 'rm_storage', 'rm_97_insurance']
+    df.loc[:, list_numeric] = df.loc[:, list_numeric].fillna(10000)
     df['sale_per_customer'] = df['sale_per_customer'].fillna('N/A')
     df['businessname_final'] = df['businessname_final'].fillna('Not available')
 
@@ -1143,7 +1177,6 @@ def transform(root_dir, client_pl, client, df, path):
     full_process_filename = "ALP_Retail_FullProcessedDataWithLabels.csv"
     load_csv(client, realtime_path, full_process_filename, df)
     load_csv(client, path, full_process_filename, df)
-
 
 def load_csv(datalake_service_client, pre_path, suf_path, df):
  

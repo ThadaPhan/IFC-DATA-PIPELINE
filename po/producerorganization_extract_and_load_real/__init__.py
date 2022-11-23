@@ -60,7 +60,8 @@ def extract(server_name, username, password, form_id, project, phase):
     data = scto.get_form_data(form_id, format='csv')
     df = pd.read_csv(StringIO(data))
     df = df[(df['project'] == project) & (df['phase_pl'] == phase)]
-
+    if df.empty:
+        return pd.read_csv('producerorganization_extract_and_load_real/tmp_raw/surveycto_data.csv')
     return df
 
 
@@ -1159,12 +1160,15 @@ def transform(root_dir, project, client, df, path):
     df['ofp_categ_median'] = np.round(df['ofp_categ_scw'].median(), 0)
     df['total_sc_final_median'] = np.round(df['total_sc_final'].median(), 0)
     # calculate variance score per category and total score
-    df['msg_categ_variance'] = np.round(variance(df['msg_categ_scw']), 0)
-    df['pts_categ_variance'] = np.round(variance(df['pts_categ_scw']), 0)
-    df['pp_categ_variance'] = np.round(variance(df['pp_categ_scw']), 0)
-    df['rm_categ_variance'] = np.round(variance(df['rm_categ_scw']), 0)
-    df['ofp_categ_variance'] = np.round(variance(df['ofp_categ_scw']), 0)
-    df['total_sc_final_variance'] = np.round(variance(df['total_sc_final']), 0)
+    if(len(df)>1):
+        df['msg_categ_variance'] = np.round(variance(df['msg_categ_scw']), 0)
+        df['pts_categ_variance'] = np.round(variance(df['pts_categ_scw']), 0)
+        df['pp_categ_variance'] = np.round(variance(df['pp_categ_scw']), 0)
+        df['rm_categ_variance'] = np.round(variance(df['rm_categ_scw']), 0)
+        df['ofp_categ_variance'] = np.round(variance(df['ofp_categ_scw']), 0)
+        df['total_sc_final_variance'] = np.round(variance(df['total_sc_final']), 0)
+    else:
+        df[['msg_categ_variance', 'pts_categ_variance', 'pp_categ_variance', 'rm_categ_variance', 'ofp_categ_variance', 'total_sc_final_variance']] = 0
     # Calculate top quartile per category
     df['msg_categ_topq'] = df['msg_categ_scw'].quantile(0.75).round(1)
     df['pts_categ_topq'] = df['pts_categ_scw'].quantile(0.75).round(1)

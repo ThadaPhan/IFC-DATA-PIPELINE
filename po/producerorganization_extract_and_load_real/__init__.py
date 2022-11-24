@@ -189,7 +189,7 @@ def transform(root_dir, project, client, df, path):
             df[i] == df[i].fillna('N/A')
         else:
             df[i] = df[i].fillna("")
-            df[i] = df[i].apply(lambda x: " ".join(x.title().split()))
+            df[i] = df[i].apply(lambda x: " ".join(str(x).title().split()))
 
 
     # ## Identify and drop
@@ -589,6 +589,7 @@ def transform(root_dir, project, client, df, path):
     df['ofp_borrowed_sc'] = np.where(df['ofp_borrowed'] == 1, 100, 0)
 
     # <p>How does the ${resp_label_pl} <i>currently</i> finance the business?</p>
+    df['ofp_current_fin'] = df['ofp_current_fin'].astype(str)
     df['ofp_current_fin_sc'] = np.where(df['ofp_current_fin'].str.contains('2', regex=False), 100,
                                         np.where(df['ofp_current_fin'].str.contains('3', regex=False), 80,
                                                 np.where(df['ofp_current_fin'].str.contains('5', regex=False), 70,
@@ -612,18 +613,7 @@ def transform(root_dir, project, client, df, path):
     # Additional calculations and new variable construction
 
     # Total Member loyalty ratio and average – Inputs
-    df['loyal_ratio_inputs_members'] = (
-        (df['msg_loyal_inputs']/df['msg_member'])*100).round(1)
     # Female member loyalty ratio and average – Inputs
-    df['loyal_ratio_inputs_women'] = (
-        (df['msg_loyal_inputs_women']/df['msg_loyal_inputs'])*100).round(1)
-    # Male member loyalty ratio and average – Inputs
-    df['loyal_ratio_inputs_men'] = (
-        (df['msg_loyal_inputs_men']/df['msg_loyal_inputs'])*100).round(1)
-
-    # Total member loyalty ratio and average – Product
-    df['loyal_ratio_product_members'] = (
-        (df['msg_loyal_product']/df['msg_member'])*100).round(1)
     # Female member loyalty ratio and average – Product# Score calculation
     # Member Services and Governance msg_
     # Answer Scores (unweighted)
@@ -905,8 +895,8 @@ def transform(root_dir, project, client, df, path):
     # Additional calculations and new variable construction
 
     # Total Member loyalty ratio and average – Inputs
-    df['loyal_ratio_inputs_members'] = (
-        (df['msg_loyal_inputs']/df['msg_member'])*100).round(1)
+    df['loyal_ratio_inputs_members'] = np.where(df['msg_loyal_inputs'].isnull(), np.NAN,
+                                        ((df['msg_loyal_inputs']/df['msg_member'])*100).round(1))
     # Female member loyalty ratio and average – Inputs
     df['loyal_ratio_inputs_women'] = (
         (df['msg_loyal_inputs_women']/df['msg_loyal_inputs'])*100).round(1)
@@ -915,26 +905,12 @@ def transform(root_dir, project, client, df, path):
         (df['msg_loyal_inputs_men']/df['msg_loyal_inputs'])*100).round(1)
 
     # Total member loyalty ratio and average – Product
-    df['loyal_ratio_product_members'] = (
-        (df['msg_loyal_product']/df['msg_member'])*100).round(1)
-    # Female member loyalty ratio and average – Product
-    df['female_rtloyal_network_product'] = (
-        (df['msg_loyal_product_women']/df['msg_loyal_product'])*100).round(1)
-    # Male member loyalty ratio and average – Product
-    df['male_rtloyal_network_product'] = (
-        (df['msg_loyal_product_men']/df['msg_loyal_product'])*100).round(1)
+    df['loyal_ratio_product_members'] = np.where(df['msg_loyal_product'].isnull(), np.NAN,
+    ((df['msg_loyal_product']/df['msg_member'])*100).round(1))
 
-    # Sales trends
-    # convert 0 values to NaN
+
     cols = ['ofp_valuenearestyear',
             'ofp_valuemiddleyear', 'ofp_valuefurthestyear']
-    df[cols] = df[cols].replace({0: np.nan})
-    # Sales per member (most recent year only)
-    df['sales_per_member'] = (
-        df['ofp_valuenearestyear']/df['msg_member']).round(1)
-    # Calculate average sales values
-    df['sales_avg'] = round(
-        (df['ofp_valuenearestyear']/df['msg_member'].sum()), 1)
     # Count number of years of available sales data
     df['sales_data_years'] = df[cols].count(axis=1)
     # Calculate percentage change trends across all possible combinations of available data
@@ -1037,9 +1013,12 @@ def transform(root_dir, project, client, df, path):
     df['ofp_cash_amnt'] = df['ofp_cash_amnt'].fillna(0)
     df['monthscashreserve'] = round(
         df['ofp_cash_amnt']/df['ofp_monthlyexp'], 1)
-    df['monthscashreserve_avg'] = round(df['monthscashreserve'].mean(), 1)
-    df['monthscashreserve_topq'] = round(
-        df['monthscashreserve'].quantile(0.75), 0)
+    
+    if(df['monthscashreserve'].isnull().values.all()):
+        df[['monthscashreserve_avg', 'monthscashreserve_topq']] = np.NAN
+    else:
+        df['monthscashreserve_avg'] = round(df['monthscashreserve'].mean(), 1)
+        df['monthscashreserve_topq'] = round(df['monthscashreserve'].quantile(0.75), 0)
     # Awaits report template for more calculations
 
     # The weighted category score (sum of weighted question scores times categ weight
@@ -1227,12 +1206,13 @@ def transform(root_dir, project, client, df, path):
 
     # Sales trends
     # convert 0 values to NaN
-    cols = ['ofp_valuenearestyear',
-            'ofp_valuemiddleyear', 'ofp_valuefurthestyear']
     df[cols] = df[cols].replace({0: np.nan})
     # Sales per member (most recent year only)
-    df['sales_per_member'] = (
-        df['ofp_valuenearestyear']/df['msg_member']).round(1)
+
+
+    df['sales_per_member'] = np.where(df['ofp_valuenearestyear'].isnull(), np.NAN,
+        (df['ofp_valuenearestyear']/df['msg_member']).round(1))
+
     if(df['sales_per_member'].isnull().values.all()):
         df[['sales_avg', 'sales_topq']] = 0
     else:
@@ -1351,7 +1331,7 @@ def transform(root_dir, project, client, df, path):
     df.loc[:, ['ofp_borrowed_issues', 'pts_fs_audit']] = df.loc[:,
                                                                 ['ofp_borrowed_issues', 'pts_fs_audit']].fillna(10000)
 
-    df['sales_per_member'] = df['sales_per_member'].fillna('N/A')
+    # df['sales_per_member'] = df['sales_per_member'].fillna('N/A')
     df['businessname_final'] = df['businessname_final'].fillna('Not available')
 
 

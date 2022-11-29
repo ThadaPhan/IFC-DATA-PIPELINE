@@ -42,7 +42,8 @@ def download_file_from_directory(datalake_service_client, filesystem_name, pre_p
 
 
 def count_size(x):
-
+    if x['ofp_asset_shed_size_know'] == 0:
+        return np.NAN
     shed_size_template = """shed_size_{}"""
     if math.isnan(x['shed_num_count']):
         return 0
@@ -175,7 +176,7 @@ def transform(root_dir, project, client, df, path):
     #
 
 
-    col_capitalize = "project,enumerator,resp_sex_pl,assessor_pl,phase_pl,primary_resp_name_final,businessname_final,admin1_final,admin2_final,admin3_final,admin4_final"
+    col_capitalize = "enumerator,resp_sex_pl,assessor_pl,phase_pl,primary_resp_name_final,businessname_final,admin1_final,admin2_final,admin3_final,admin4_final"
     upper_str = col_capitalize.split(",")
 
 
@@ -219,7 +220,6 @@ def transform(root_dir, project, client, df, path):
                 'enumerator',
                 'poid_key',
                 'consent',
-                'resp_label_pl',
                 'resp_label_eng_pl',
                 'resp_name_pl',
                 'resp_sex_pl',
@@ -231,16 +231,12 @@ def transform(root_dir, project, client, df, path):
                 'usd_exchange_rate_pl',
                 'country_pl',
                 'admin1_pl',
-                'admin1_label_pl',
                 'admin1_label_eng_pl',
                 'admin2_pl',
-                'admin2_label_pl',
                 'admin2_label_eng_pl',
                 'admin3_pl',
-                'admin3_label_pl',
                 'admin3_label_eng_pl',
                 'admin4_pl',
-                'admin4_label_pl',
                 'admin4_label_eng_pl',
                 'assessor_pl',
                 'assessor_email_pl',
@@ -1278,7 +1274,6 @@ def transform(root_dir, project, client, df, path):
     list_old_columns = list_old_columns[~(np.isin(
         list_old_columns, list_old_columns_yes_no + list_old_columns_yes_no_99))]
 
-
     for i in list_old_columns_yes_no:
         new_values = i
         if df[i].dtype == 'object':
@@ -1313,6 +1308,8 @@ def transform(root_dir, project, client, df, path):
         df.rename(columns={'Label': new_values + '_label'}, inplace=True)
         df.index = np.arange(1, len(df)+1)
 
+    df['ofp_borrowed_issues_label'] = np.where(df['ofp_borrowed_issues'] == 1, 'Yes', 'No')
+    df['otype_label'] = np.where(df['otype']==97, df['otype97'], df['otype'])
 
     #
     # ### Fill null value
@@ -1328,8 +1325,28 @@ def transform(root_dir, project, client, df, path):
     col_other = df.columns.drop(col_object)
     df.loc[:, col_object.drop(object_col_not_change_list)
         ] = df.loc[:, col_object].fillna('N/A')
-    df.loc[:, ['ofp_borrowed_issues', 'pts_fs_audit']] = df.loc[:,
-                                                                ['ofp_borrowed_issues', 'pts_fs_audit']].fillna(10000)
+
+    df.loc[:, ['ofp_borrowed_issues', 
+    'pts_fs_audit',
+    'ofp_borrowed_lender_1', 
+    'ofp_borrowed_lender_2', 
+    'ofp_borrowed_lender_3', 
+    'ofp_borrowed_lender_4', 
+    'ofp_borrowed_lender_5', 
+    'ofp_borrowed_lender_97', 
+    'ofp_borrowed_resolved_1', 
+    'ofp_borrowed_resolved_2', 
+    'ofp_borrowed_resolved_3']] = df.loc[:,['ofp_borrowed_issues', 
+                                            'pts_fs_audit',
+                                            'ofp_borrowed_lender_1', 
+                                            'ofp_borrowed_lender_2', 
+                                            'ofp_borrowed_lender_3', 
+                                            'ofp_borrowed_lender_4', 
+                                            'ofp_borrowed_lender_5', 
+                                            'ofp_borrowed_lender_97', 
+                                            'ofp_borrowed_resolved_1', 
+                                            'ofp_borrowed_resolved_2', 
+                                            'ofp_borrowed_resolved_3']].fillna(10000)
 
     # df['sales_per_member'] = df['sales_per_member'].fillna('N/A')
     df['businessname_final'] = df['businessname_final'].fillna('Not available')
@@ -1355,6 +1372,12 @@ def transform(root_dir, project, client, df, path):
     #
     # # New columns
     #
+
+    df['ofp_bancacct_years_calc_label'] = np.where(df['ofp_bankacct'] == 1, df['ofp_bancacct_years_calc'], 'N/A')
+
+    df['ofp_bankacct_years_label'] = np.where(df['ofp_bankacct'] == 1, df['ofp_bankacct_years'], 'N/A')
+
+
 
     df['loyal_ratio_inputs_total_avg'] = np.round(
         df['loyal_ratio_inputs_members'].mean(), 0)
@@ -1423,7 +1446,6 @@ def transform(root_dir, project, client, df, path):
     df.index = df.index.set_names(['ID'])
 
 
-
     full_process_filename = ("ALP_PO_2022_FullProcessedDataWithLabel.csv")
     load_csv(client, realtime_path, full_process_filename, df)
     load_csv(client, path, full_process_filename, df)
@@ -1453,7 +1475,7 @@ def main(mytimer: func.TimerRequest) -> None:
 
     form_id = "alp_producer_organization_survey"
     survey_name = "ALP Producer Organization Survey"
-    project = 'Project 1 (Test) (2022)'
+    project = 'CiDT Cotton (2022)'
     phase = 'Baseline' 
     root_dir = "{}/{}/{}".format(survey_name, project, phase)
 

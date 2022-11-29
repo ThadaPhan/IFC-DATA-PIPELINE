@@ -1309,7 +1309,7 @@ def transform(root_dir, project, client, df, path):
         df.index = np.arange(1, len(df)+1)
 
     df['ofp_borrowed_issues_label'] = np.where(df['ofp_borrowed_issues'] == 1, 'Yes', 'No')
-    df['otype_label'] = np.where(df['otype']==97, df['otype97'], df['otype'])
+    df['otype_label'] = np.where(df['otype']==97, df['otype97'], df['otype_label'])
 
     #
     # ### Fill null value
@@ -1373,10 +1373,9 @@ def transform(root_dir, project, client, df, path):
     # # New columns
     #
 
-    df['ofp_bancacct_years_calc_label'] = np.where(df['ofp_bankacct'] == 1, df['ofp_bancacct_years_calc'], 'N/A')
+    df['ofp_bancacct_years_calc_label'] = np.where(df['ofp_bankacct'] == 1, df['ofp_bancacct_years_calc'].round(0).astype('Int64'), 'N/A')
 
-    df['ofp_bankacct_years_label'] = np.where(df['ofp_bankacct'] == 1, df['ofp_bankacct_years'], 'N/A')
-
+    df['ofp_bankacct_years_label'] = np.where(df['ofp_bankacct'] == 1, df['ofp_bankacct_years'].round(0).astype('Int64'), 'N/A')
 
 
     df['loyal_ratio_inputs_total_avg'] = np.round(
@@ -1493,5 +1492,3 @@ def main(mytimer: func.TimerRequest) -> None:
     load_csv(client, raw_pre_path, "surveycto_data.csv", df)
 
     transform(root_dir, project, client, df, processed_pre_path)
-
-

@@ -1176,18 +1176,18 @@ def transform(root_dir, project, client, df, path):
     #df['bankyear'] = date.today().year - df['ofp_bankacct_years']
 
     # Caculate size of shed/warehouses
-    df['land_comm_size_converted'] = np.where(df['land_comm_um'] == 2, df['land_comm_size'],
-                                            np.where(df['land_comm_um'] == 3, df['land_comm_size']*10000,
-                                                    np.where(df['land_comm_um'] == 4, df['land_comm_size']*4047,
-                                                                np.where(df['land_comm_um'] == 1, df['land_comm_size']*0.093,
-                                                                        np.where(df['land_comm_um'] == 5, df['land_comm_size']/1.196, df['land_comm_size']
+    df['land_comm_size_converted'] = np.where(df['land_comm_um'] == 3, df['land_comm_size'],
+                                            np.where(df['land_comm_um'] == 2, df['land_comm_size']/10000,
+                                                    np.where(df['land_comm_um'] == 4, df['land_comm_size']/2.47105,
+                                                                np.where(df['land_comm_um'] == 1, df['land_comm_size']/107639,
+                                                                         np.where(df['land_comm_um'] == 5, df['land_comm_size']/11959.9, df['land_comm_size']
                                                                                 )))))
 
-    df['land_ag_size_converted'] = np.where(df['land_ag_um'] == 2, df['land_ag_size'],
-                                            np.where(df['land_ag_um'] == 3, df['land_ag_size']*10000,
-                                                    np.where(df['land_ag_um'] == 4, df['land_ag_size']*4047,
-                                                            np.where(df['land_ag_um'] == 1, df['land_ag_size']*0.093,
-                                                                    np.where(df['land_ag_um'] == 5, df['land_ag_size']/1.196, df['land_ag_size']
+    df['land_ag_size_converted'] = np.where(df['land_ag_um'] == 3, df['land_ag_size'],
+                                            np.where(df['land_ag_um'] == 2, df['land_ag_size']/10000,
+                                                     np.where(df['land_ag_um'] == 4, df['land_ag_size']/2.47105,
+                                                             np.where(df['land_ag_um'] == 1, df['land_ag_size']/107639,
+                                                                      np.where(df['land_ag_um'] == 5, df['land_ag_size']/11959.9, df['land_ag_size']
                                                                                 )))))
 
     final_score_cols = ['msg_categ_scw', 'pts_categ_scw', 'pp_categ_scw', 'rm_categ_scw',

@@ -1424,15 +1424,15 @@ def transform(root_dir, project, client, df, path):
                 "ofp_asset97"]
     for i in list_asset:
         df[i] = np.where(df["ofp_asset"] == 0, 0, df[i])
-    list_lasset = ["ofp_asset_office",
-                "ofp_asset_shed",
-                "ofp_asset_land",
-                "ofp_asset_truck",
-                "ofp_asset_motorbike",
-                "ofp_asset_tractor",
-                "ofp_asset_harvester",
-                "ofp_asset_scale",
-                "ofp_asset97"]
+    list_lasset = ["ofp_lasset_office",
+                    "ofp_lasset_shed",
+                    "ofp_lasset_land",
+                    "ofp_lasset_truck",
+                    "ofp_lasset_motorbike",
+                    "ofp_lasset_tractor",
+                    "ofp_lasset_harvester",
+                    "ofp_lasset_scale",
+                    "ofp_lasset97"]
     for i in list_lasset:
         df[i] = np.where(df["ofp_lasset"] == 0, 0, df[i])
 

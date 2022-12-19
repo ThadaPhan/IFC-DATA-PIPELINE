@@ -1176,12 +1176,55 @@ def transform(root_dir, project, client, df, path):
     #df['bankyear'] = date.today().year - df['ofp_bankacct_years']
 
     # Caculate size of shed/warehouses
+
+    def calculate_land_comm_size_converted_ir(x):
+        if (x['land_comm_um'] == 1):
+            return "{} {}".format(int(x['land_comm_size']), "Square Feet")
+        elif (x['land_comm_um'] == 2):
+            return "{} {}".format(int(x['land_comm_size']), "Square Meters")
+        elif (x['land_comm_um'] == 3):
+            return "{} {}".format(int(x['land_comm_size']), "Hectares")
+        elif (x['land_comm_um'] == 4):
+            return "{} {}".format(int(x['land_comm_size']), "Acres")
+        elif (x['land_comm_um'] == 5):
+            return "{} {}".format(int(x['land_comm_size']), "Square Yards")
+        elif (x['land_comm_know'] == 0):
+            return 'Do not know'
+        else:
+            return "Not applicable"
+
+
+    df['land_comm_size_converted_ir'] = df.apply(lambda x: calculate_land_comm_size_converted_ir(x), axis=1)
+
+    print(df['land_comm_size_converted_ir'])
+
     df['land_comm_size_converted'] = np.where(df['land_comm_um'] == 3, df['land_comm_size'],
                                             np.where(df['land_comm_um'] == 2, df['land_comm_size']/10000,
                                                     np.where(df['land_comm_um'] == 4, df['land_comm_size']/2.47105,
                                                                 np.where(df['land_comm_um'] == 1, df['land_comm_size']/107639,
                                                                          np.where(df['land_comm_um'] == 5, df['land_comm_size']/11959.9, df['land_comm_size']
                                                                                 )))))
+
+
+    def calculate_land_ag_size_converted_ir(x):
+        if (x['land_ag_um'] == 1):
+            return "{} {}".format(int(x['land_ag_size']), "Square Feet")
+        elif (x['land_ag_um'] == 2):
+            return "{} {}".format(int(x['land_ag_size']), "Square Meters")
+        elif (x['land_ag_um'] == 3):
+            return "{} {}".format(int(x['land_ag_size']), "Hectares")
+        elif (x['land_ag_um'] == 4):
+            return "{} {}".format(int(x['land_ag_size']), "Acres")
+        elif (x['land_ag_um'] == 5):
+            return "{} {}".format(int(x['land_ag_size']), "Square Yards")
+        elif (x['land_ag_know'] == 0):
+            return 'Do not know'
+        else:
+            return "Not applicable"
+
+    df['land_ag_size_converted_ir'] = df.apply(lambda x: calculate_land_ag_size_converted_ir(x), axis=1)
+
+    print(df['land_ag_size_converted_ir'])
 
     df['land_ag_size_converted'] = np.where(df['land_ag_um'] == 3, df['land_ag_size'],
                                             np.where(df['land_ag_um'] == 2, df['land_ag_size']/10000,
@@ -1475,8 +1518,9 @@ def main(mytimer: func.TimerRequest) -> None:
     form_id = "alp_producer_organization_survey"
     survey_name = "ALP Producer Organization Survey"
     project = 'CiDT Cotton (2022)'
-    phase = 'Baseline' 
-    root_dir = "{}/{}/{}".format(survey_name, project, phase)
+    phase = 'Baseline'
+    group_type = 'Group Total' 
+    root_dir = "{}/{}/{}/{}".format(survey_name, project, phase, group_type)
 
     df = extract(server_name, username, password, form_id, project, phase)
 

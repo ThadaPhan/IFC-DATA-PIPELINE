@@ -16,3 +16,4 @@ pytz
 openpyxl
 xlsxwriter
 pysurveycto
+numpy==1.21.5

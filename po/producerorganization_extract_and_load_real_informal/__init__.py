@@ -14,7 +14,7 @@ import azure.functions as func
 from azure.storage.filedatalake import DataLakeServiceClient
 
 
-def download_file_from_directory(datalake_service_client, filesystem_name, pre_path, suf_path):
+def download_file_from_directory(datalake_service_client, filesystem_name, pre_path, suf_path, for_csv = False):
 
     file_system_client = datalake_service_client.get_file_system_client(
         file_system=filesystem_name)
@@ -35,10 +35,13 @@ def download_file_from_directory(datalake_service_client, filesystem_name, pre_p
 
     local_file.close()
 
-    ALP_labels = pd.read_excel(local_file_path,
-                               sheet_name="Selective", dtype={'variable': float},
-                               index_col=None)
-    return ALP_labels
+    if(for_csv):
+        data = pd.read_csv(local_file_path)
+    else:
+        data = pd.read_excel(local_file_path,
+                                sheet_name="Selective", dtype={'variable': float},
+                                index_col=None)
+    return data
 
 
 def count_size(x):
@@ -54,16 +57,26 @@ def count_size(x):
             count += x[shed_size_template.format(i)]
         return count
 
+def get_source_from_manual(client, manual_dir):
+    filesystem_name = "data"
+    pre_azure_label_path = manual_dir
+    sub_azure_label_path = "surveycto_data.csv"
+    data = download_file_from_directory(client, filesystem_name, pre_azure_label_path, sub_azure_label_path, True)
+    return data
 
-def extract(server_name, username, password, form_id, project, phase):
+def extract(server_name, username, password, form_id, project, phase, client, manual_dir):
 
-    scto = pysurveycto.SurveyCTOObject(server_name, username, password)
-    data = scto.get_form_data(form_id, format='csv')
-    df = pd.read_csv(StringIO(data))
-    df = df[(df['project'] == project) & (df['phase_pl'] == phase) & (df['otype'] == 1)]
-    if df.empty:
-        return pd.read_csv('producerorganization_extract_and_load_real/tmp_raw/surveycto_data.csv')
-    return df
+    try:
+        df = get_source_from_manual(client, manual_dir)
+        return df
+    except:
+        scto = pysurveycto.SurveyCTOObject(server_name, username, password)
+        data = scto.get_form_data(form_id, format='csv')
+        df = pd.read_csv(StringIO(data))
+        df = df[(df['project'] == project) & (df['phase_pl'] == phase) & (df['otype'] == 1)]
+        if df.empty:
+            return pd.read_csv('producerorganization_extract_and_load_real/tmp_raw/surveycto_data.csv')
+        return df
 
 
 def init_datalake_service_client(account_name, account_key):
@@ -311,12 +324,20 @@ def transform(root_dir, project, client, df, path):
             df[i].fillna(0, inplace=True)
 
 
-    ## Convert starttime to format dd/mm/yyyy, new column “startdate”
-    df['startdate'] = df["starttime"].apply(lambda x: datetime.strptime(
-        x, "%b %d, %Y %I:%M:%S %p").strftime('%d/%m/%Y'))
-    ## Convert endtime to format dd/mm/yyyy, new column name “enddate”
-    df['enddate'] = df["endtime"].apply(lambda x: datetime.strptime(
-        x, "%b %d, %Y %I:%M:%S %p").strftime('%d/%m/%Y'))
+    try:
+        ## Convert starttime to format dd/mm/yyyy, new column “startdate”
+        df['startdate'] = df["starttime"].apply(lambda x: datetime.strptime(
+            x, "%b %d, %Y %I:%M:%S %p").strftime('%d/%m/%Y'))
+        ## Convert endtime to format dd/mm/yyyy, new column name “enddate”
+        df['enddate'] = df["endtime"].apply(lambda x: datetime.strptime(
+            x, "%b %d, %Y %I:%M:%S %p").strftime('%d/%m/%Y'))
+    except:
+        ## Convert starttime to format dd/mm/yyyy, new column “startdate”
+        df['startdate'] = df["starttime"].apply(lambda x: datetime.strptime(
+            x, "%m/%d/%Y %H:%M").strftime('%d/%m/%Y'))
+        ## Convert endtime to format dd/mm/yyyy, new column name “enddate”
+        df['enddate'] = df["endtime"].apply(lambda x: datetime.strptime(
+            x, "%m/%d/%Y %H:%M").strftime('%d/%m/%Y'))
     ## Create new column “location_combine” by combining “admin3_final, admin4_final”
     df['location_combine'] = df['admin3_final'].astype(
         str) + ', ' + df['admin4_final'].astype(str)
@@ -1196,7 +1217,6 @@ def transform(root_dir, project, client, df, path):
 
     df['land_comm_size_converted_ir'] = df.apply(lambda x: calculate_land_comm_size_converted_ir(x), axis=1)
 
-    print(df['land_comm_size_converted_ir'])
 
     df['land_comm_size_converted'] = np.where(df['land_comm_um'] == 3, df['land_comm_size'],
                                             np.where(df['land_comm_um'] == 2, df['land_comm_size']/10000,
@@ -1224,7 +1244,6 @@ def transform(root_dir, project, client, df, path):
 
     df['land_ag_size_converted_ir'] = df.apply(lambda x: calculate_land_ag_size_converted_ir(x), axis=1)
 
-    print(df['land_ag_size_converted_ir'])
 
     df['land_ag_size_converted'] = np.where(df['land_ag_um'] == 3, df['land_ag_size'],
                                             np.where(df['land_ag_um'] == 2, df['land_ag_size']/10000,
@@ -1509,7 +1528,7 @@ def main(mytimer: func.TimerRequest) -> None:
     if mytimer.past_due:
         logging.info('The timer is past due!')
 
-    server_name = "ifcafrica"
+    server_name = "ifcafrica"   
     username = "squiroga@ifc.org"
     password = "IFCMAS2021!"
     account_name = 'sproducerorganization'
@@ -1521,10 +1540,11 @@ def main(mytimer: func.TimerRequest) -> None:
     phase = 'Baseline'
     group_type = 'Group Informal' 
     root_dir = "{}/{}/{}/{}".format(survey_name, project, phase, group_type)
-
-    df = extract(server_name, username, password, form_id, project, phase)
+    manual_dir = "/{}/raw/manual".format(root_dir)
 
     client = init_datalake_service_client(account_name, account_key)
+
+    df = extract(server_name, username, password, form_id, project, phase, client, manual_dir)
 
     current_date_str = datetime.now(pytz.timezone(
         "Asia/Ho_Chi_Minh")).strftime("%Y/%m/%d/")

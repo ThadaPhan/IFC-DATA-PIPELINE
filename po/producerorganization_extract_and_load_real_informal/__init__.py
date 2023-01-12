@@ -68,15 +68,15 @@ def extract(server_name, username, password, form_id, project, phase, client, ma
 
     try:
         df = get_source_from_manual(client, manual_dir)
-        return df
     except:
         scto = pysurveycto.SurveyCTOObject(server_name, username, password)
         data = scto.get_form_data(form_id, format='csv')
         df = pd.read_csv(StringIO(data))
-        df = df[(df['project'] == project) & (df['phase_pl'] == phase) & (df['otype'] == 1)]
-        if df.empty:
-            return pd.read_csv('producerorganization_extract_and_load_real/tmp_raw/surveycto_data.csv')
-        return df
+        
+    df = df[(df['project'] == project) & (df['phase_pl'] == phase) & (df['otype'] == 1)]
+    if df.empty:
+        return pd.read_csv('producerorganization_extract_and_load_real/tmp_raw/surveycto_data.csv')
+    return df
 
 
 def init_datalake_service_client(account_name, account_key):
